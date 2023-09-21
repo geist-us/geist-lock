@@ -14,8 +14,8 @@ const changeEndianness = string => {// change endianess of hex value before plac
     const result = [];
     let len = string.length - 2;
     while (len >= 0) {
-      result.push(string.substr(len, 2));
-      len -= 2;
+        result.push(string.substr(len, 2));
+        len -= 2;
     }
     return result.join('');
 }
@@ -27,19 +27,30 @@ const hex2Int = hex => {
     const reversedHex = changeEndianness(hex);
     return parseInt(reversedHex, 16);
 }
-const getBlock = async() => {
+const getBlock = async () => {
     const r = await fetch(`https://api.whatsonchain.com/v1/bsv/main/chain/info`);
     const res = await r.json();
     return res?.blocks;
 }
-const lockCoins = (address, blockHeight, satoshis, pkWIF, post, likeTxid, emoji) => {
+const lockCoins = (txidToLock, address, blockHeight, satoshis, pkWIF, post, likeTxid, emoji) => {
+    console.log('lockCoins', address, blockHeight, 'Locking TXID:', txidToLock);
     const bsvtx = bsv.Transaction();
-    const p2pkhOut = new bsv.Transaction.Output({script: bsv.Script(new bsv.Address(address)), satoshis: 1});
+    const p2pkhOut = new bsv.Transaction.Output({ script: bsv.Script(new bsv.Address(address)), satoshis: 1 });
+    console.log('p2pkhOut', p2pkhOut);
+
     const addressHex = p2pkhOut.script.chunks[2].buf.toString('hex');
     const nLockTimeHexHeight = int2Hex(blockHeight);
-    const scriptTemplate = `${LOCKUP_PREFIX} ${addressHex} ${nLockTimeHexHeight} ${LOCKUP_SUFFIX}`;
+
+    // Include txidToLock in the script template
+    const scriptTemplate = `${LOCKUP_PREFIX} ${addressHex} ${nLockTimeHexHeight} ${txidToLock} ${LOCKUP_SUFFIX}`;
+    console.log('scriptTemplate', scriptTemplate);
+
     const lockingScript = bsv.Script.fromASM(scriptTemplate);
-    bsvtx.addOutput(new bsv.Transaction.Output({script: lockingScript, satoshis}));
+    console.log('lockingScript', lockingScript);
+
+    console.log('lockCoins, about to add outputs');
+
+    bsvtx.addOutput(new bsv.Transaction.Output({ script: lockingScript, satoshis }));
     if (post) {
         const p = bSocial.post();
         p.addText(post);
@@ -60,6 +71,7 @@ const lockCoins = (address, blockHeight, satoshis, pkWIF, post, likeTxid, emoji)
         } else { payload = l.getOps('utf8') }
         bsvtx.addSafeData(payload);
     }
+
     return bsvtx.toString();
 }
 // build the solution to the locking script by constructing the pre image and signature
@@ -76,7 +88,7 @@ const unlockLockScript = (txHex, inputIndex, lockTokenScript, satoshis, privkey)
     }
     return bsv.Script.fromASM(`${s.toString('hex')} ${privkey.toPublicKey().toHex()} ${preimg}`).toHex();
 }
-const unlockCoins = async(pkWIF, receiveAddress, txid, oIdx = 0) => {
+const unlockCoins = async (pkWIF, receiveAddress, txid, oIdx = 0) => {
     try {
         const rawtx = await getRawtx(txid);
         const lockedUTXO = getUTXO(rawtx, oIdx);
@@ -94,5 +106,5 @@ const unlockCoins = async(pkWIF, receiveAddress, txid, oIdx = 0) => {
         const solution = unlockLockScript(bsvtx.toString(), oIdx, lockedUTXO.script, lockedUTXO.satoshis, bsv.PrivateKey.fromWIF(pkWIF))
         bsvtx.inputs[0].setScript(solution);
         return bsvtx.toString();
-    } catch(e) { console.log(e) }
+    } catch (e) { console.log(e) }
 }

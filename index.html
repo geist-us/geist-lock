@@ -9,21 +9,91 @@
     <script src="./scripts/SHUAllet.js"></script>
     <script src="./scripts/locks.js"></script>
   </head>
-  Txid<input id="txid" />
+  <!-- Txid<input id="txid" />
   <button id="unlock" onclick="unlocker()">Unlock</button>
   Raw tx<textarea id="raw"></textarea>
   <div>
     WIF<input id="pkWif" /> Receive Address<input id="receiveAddress" />
+  </div> -->
+  <br />
+  <div>
+    Enter existing TXID:
+    <input id="txidToLock" />
+    <button id="lockCoinsBtn" onclick="lockCoinsWrapper()">Lock TXID</button>
+  </div>
+  <br />
+  <div>
+    pkWIF:
+    <input id="pkWif" />
+  </div>
+  <br />
+  <div>
+    Receive Address:
+    <input id="receiveAddress" />
+  </div>
+  <br />
+  <div>
+    Raw TX:
+    <textarea id="raw"></textarea>
   </div>
 </html>
 <script>
-  const unlocker = async (pkWIF, address) => {
+  // const unlocker = async (pkWIF, address) => {
+  //   try {
+  //     if (!pkWIF) pkWIF = document.getElementById("pkWif").value;
+  //     if (!address) address = document.getElementById("receiveAddress").value;
+  //     const txid = document.getElementById("txid").value;
+  //     const rawtx = await unlockCoins(pkWIF, address, txid);
+  //     raw.innerText = rawtx;
+  //   } catch (e) {
+  //     console.log(e);
+  //     alert(e);
+  //   }
+  // };
+  const lockCoinsWrapper = async () => {
     try {
-      if (!pkWIF) pkWIF = document.getElementById("pkWif").value;
-      if (!address) address = document.getElementById("receiveAddress").value;
-      const txid = document.getElementById("txid").value;
-      const rawtx = await unlockCoins(pkWIF, address, txid);
-      raw.innerText = rawtx;
+      // Read values from the HTML input fields
+      const txidToLock = document.getElementById("txidToLock").value;
+      const pkWIF = document.getElementById("pkWif").value;
+      const receiveAddress = document.getElementById("receiveAddress").value;
+
+      console.log(
+        "txidtoLock",
+        txidToLock,
+        "pkwif",
+        pkWIF,
+        "receive address",
+        receiveAddress
+      );
+
+      // Fetch the current block height
+      //const currentBlockHeight = await getBlock();
+      const currentBlockHeight = 1;
+
+      // Define the amount of satoshis to lock (this is just an example, you can fetch the actual amount)
+      const satoshis = 1;
+
+      // Define a post or likeTxid (this is just an example, you can fetch the actual data)
+      const post = "This is a test post";
+      const likeTxid = null;
+      const emoji = null;
+
+      console.log("about to lockCoins");
+
+      // Call the lockCoins function
+      const lockedTx = lockCoins(
+        txidToLock,
+        receiveAddress,
+        currentBlockHeight,
+        satoshis,
+        pkWIF,
+        post,
+        likeTxid,
+        emoji
+      );
+
+      // Display the locked transaction
+      document.getElementById("raw").innerText = lockedTx;
     } catch (e) {
       console.log(e);
       alert(e);
